@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#05080f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vital Log">
+<link rel="manifest" href="./manifest.json">
+<title>Vital Log</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05080f;--bg2:#0b1120;--glass:rgba(255,255,255,0.04);--glass2:rgba(255,255,255,0.07);
+  --glassBorder:rgba(255,255,255,0.08);--glassBorder2:rgba(255,255,255,0.12);
+  --glassHi:rgba(255,255,255,0.15);--t1:#f0f2f5;--t2:#9ca3b4;--t3:#5b6378;--t4:#3a4155;
+  --green:#6ee7b7;--purple:#818cf8;--pink:#f472b6;--blue:#38bdf8;
+  --yellow:#fbbf24;--violet:#a78bfa;--orange:#fb923c;--red:#f87171;
+  --mono:'JetBrains Mono',monospace;--sans:'Noto Sans JP',system-ui,sans-serif;
+  --blur:saturate(180%) blur(20px);--blur2:saturate(150%) blur(12px);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:var(--sans);color:var(--t1);min-height:100vh;min-height:100dvh;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  background:var(--bg);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%,rgba(110,231,183,0.08),transparent),
+    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(129,140,248,0.06),transparent);
+}
+input,select,textarea,button{font-family:inherit;color:var(--t1);}
+::placeholder{color:var(--t4);}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:3px;}
+input[type=range]{appearance:none;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;box-shadow:0 0 12px rgba(110,231,183,0.4),inset 0 1px 0 rgba(255,255,255,0.3);}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+/* Liquid Glass Components */
+.glass{
+  background:var(--glass);backdrop-filter:var(--blur2);-webkit-backdrop-filter:var(--blur2);
+  border:1px solid var(--glassBorder);border-radius:20px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.06);
+  padding:20px;margin-bottom:16px;position:relative;overflow:hidden;
+}
+.glass::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+}
+.glass-sm{
+  background:var(--glass);backdrop-filter:var(--blur2);-webkit-backdrop-filter:var(--blur2);
+  border:1px solid var(--glassBorder);border-radius:12px;padding:10px 14px;
+}
+.glass-input{
+  background:rgba(255,255,255,0.03);border:1px solid var(--glassBorder);border-radius:10px;
+  padding:9px 14px;font-size:13px;outline:none;width:100%;color:var(--t1);
+  transition:border-color 0.2s,box-shadow 0.2s;
+}
+.glass-input:focus{border-color:var(--glassBorder2);box-shadow:0 0 0 3px rgba(110,231,183,0.08);}
+.btn-glass{
+  background:var(--glass2);backdrop-filter:var(--blur2);-webkit-backdrop-filter:var(--blur2);
+  border:1px solid var(--glassBorder);border-radius:10px;padding:8px 16px;
+  font-size:13px;cursor:pointer;font-weight:500;color:var(--t2);transition:all 0.2s;
+}
+.btn-glass:active{transform:scale(0.97);background:var(--glassHi);}
+.btn-add{
+  width:100%;padding:10px 0;border:1px dashed var(--glassBorder2);border-radius:12px;
+  background:transparent;color:var(--t3);font-size:13px;cursor:pointer;font-weight:500;margin-top:6px;
+}
+.btn-primary{
+  width:100%;padding:16px 0;border:none;border-radius:16px;font-size:16px;font-weight:700;
+  cursor:pointer;letter-spacing:0.04em;font-family:var(--mono);transition:all 0.2s;
+  background:linear-gradient(135deg,var(--green),var(--purple));color:var(--bg);
+  box-shadow:0 4px 24px rgba(110,231,183,0.25),inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-primary:active{transform:scale(0.98);}
+.sec-title{
+  margin:0;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;
+  font-family:var(--mono);display:flex;align-items:center;gap:10px;margin-bottom:16px;
+}
+.toast{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  padding:10px 24px;border-radius:14px;font-size:14px;font-weight:600;z-index:999;
+  font-family:var(--mono);animation:fadeUp 0.3s ease;
+  background:rgba(15,23,42,0.9);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid rgba(110,231,183,0.2);color:var(--green);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.modal-box{
+  background:rgba(11,17,32,0.95);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--glassBorder2);border-radius:24px;padding:24px;
+  width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.5);
+  position:relative;overflow:hidden;
+}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);}
+.tab-bar{display:flex;gap:3px;background:var(--glass);backdrop-filter:var(--blur2);-webkit-backdrop-filter:var(--blur2);border-radius:14px;padding:3px;border:1px solid var(--glassBorder);}
+.tab-btn{flex:1;padding:9px 0;border:none;border-radius:11px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--t3);}
+.tab-btn.active{background:var(--glass2);color:var(--t1);box-shadow:0 2px 8px rgba(0,0,0,0.2),inset 0 1px 0 rgba(255,255,255,0.06);}
+#app{max-width:480px;margin:0 auto;padding:12px 16px 100px;}
+</style>
+</head>
+<body>
+
+<div id="header" style="padding:16px 20px 8px;position:sticky;top:0;z-index:100;backdrop-filter:saturate(180%) blur(24px);-webkit-backdrop-filter:saturate(180%) blur(24px);background:rgba(5,8,15,0.7);max-width:480px;margin:0 auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <h1 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;background:linear-gradient(135deg,var(--green),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:var(--mono);">Vital Log</h1>
+      <p style="font-size:10px;color:var(--t4);letter-spacing:0.12em;font-family:var(--mono);margin-top:2px;">DAILY WELLNESS TRACKER</p>
+    </div>
+    <div id="date-badge" style="padding:6px 14px;border-radius:10px;font-size:13px;color:var(--t2);font-family:var(--mono);display:none;background:var(--glass);border:1px solid var(--glassBorder);backdrop-filter:var(--blur2);-webkit-backdrop-filter:var(--blur2);"></div>
+  </div>
+  <div class="tab-bar" style="margin-top:12px;" id="tabs"></div>
+</div>
+
+<div id="app"></div>
+<div id="toast-container"></div>
+<div id="modal-container"></div>
+
+<script>
+/* ═══ IndexedDB ═══ */
+const DB='VitalLogDB';let db;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=e=>{e.target.result.createObjectStore('kv');};r.onsuccess=e=>{db=e.target.result;res();};r.onerror=rej;});}
+function dbG(k){return new Promise(r=>{const t=db.transaction('kv','readonly');const s=t.objectStore('kv');const q=s.get(k);q.onsuccess=()=>r(q.result??null);q.onerror=()=>r(null);});}
+function dbS(k,v){return new Promise((r,j)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=r;t.onerror=j;});}
+function dbD(k){return new Promise(r=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').delete(k);t.oncomplete=r;t.onerror=r;});}
+function dbK(pfx=''){return new Promise(r=>{const t=db.transaction('kv','readonly');const q=t.objectStore('kv').getAllKeys();q.onsuccess=()=>r((q.result||[]).filter(k=>typeof k==='string'&&k.startsWith(pfx)));q.onerror=()=>r([]);});}
+
+/* ═══ State ═══ */
+const SKEY='settings',MHKEY='med-hist';
+const DTAGS=["ストレス","リラックス","不安","充実"];
+const defEx=[
+  {id:"wp1",name:"Day A — 腕・前腕",items:[{name:"前腕_上",weight:"5kg",reps:"10回×3",note:""},{name:"前腕_下",weight:"6kg",reps:"10回×3",note:"次回重量up"},{name:"上腕二頭筋",weight:"7kg",reps:"10回×3",note:""},{name:"上腕三頭筋",weight:"6kg",reps:"10回×3",note:""}]},
+  {id:"wp2",name:"Day B — ベンチ・レッグ",items:[{name:"ベンチプレス",weight:"35kg",reps:"",note:""},{name:"レッグプレス&ふくらはぎ",weight:"114kg",reps:"",note:""}]},
+  {id:"wp3",name:"Day C — 有酸素・チェスト",items:[{name:"ランニング",weight:"",reps:"20min",note:"ルーティン"},{name:"バーチカルチェストプレス",weight:"34kg",reps:"",note:""},{name:"リアルデルトペックフライ",weight:"20kg",reps:"",note:""},{name:"リカバリーウォーキング",weight:"",reps:"10分",note:"速さ4.6"}]},
+  {id:"wp4",name:"Day D — 積極的休養（水泳）",items:[{name:"アップ（平泳ぎ/背泳ぎ）",weight:"",reps:"200m",note:"ゆるく"},{name:"メイン 50m×10本",weight:"",reps:"500m",note:"呼吸が上がらないペース / 休憩15〜30秒"},{name:"ダウン",weight:"",reps:"100〜200m",note:""}]},
+];
+const defS={presetMeds:[{id:"m1",name:"薬A",dose:"10mg",timing:"朝"},{id:"m2",name:"薬B",dose:"5mg",timing:"夜"}],customTags:[],exercisePresets:JSON.parse(JSON.stringify(defEx)),apiKey:""};
+function mkLog(){return{medications:[],selectedWorkouts:[],restDay:false,exercises:[],sleep:{bedtime:"23:00",wakeup:"07:00",quality:3,note:"",deep:null,rem:null,core:null,awake:null,hr:null,resp:null,restHr:null},journal:{text:"",moodScore:5,tags:[],autoTags:null,summary:null},evaluation:{productivity:5,mental:5},skipped:{}};}
+let S={view:'record',date:fd(new Date()),log:mkLog(),sets:JSON.parse(JSON.stringify(defS)),mh:[],ld:{},dr:7,dd:[],cm:new Date(),ai:null,ail:false,exEd:null,sTab:'meds'};
+function fd(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+
+/* ═══ Toast ═══ */
+function toast(m){document.getElementById('toast-container').innerHTML=`<div class="toast">${m}</div>`;setTimeout(()=>{document.getElementById('toast-container').innerHTML='';},2500);}
+
+/* ═══ DOM helper ═══ */
+function h(t,a,...c){const e=document.createElement(t);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='className')e.className=v;else if(k==='value'&&(t==='input'||t==='textarea'||t==='select'))e.value=v;else if(k==='checked')e.checked=v;else if(k==='innerHTML')e.innerHTML=v;else if(k==='htmlFor')e.htmlFor=v;else e.setAttribute(k,v);});c.flat(9).forEach(x=>{if(x==null||x===false)return;e.appendChild(typeof x==='string'||typeof x==='number'?document.createTextNode(String(x)):x);});return e;}
+
+/* ═══ URL Param Auto-Import ═══ */
+function checkURLParams(){
+  const p=new URLSearchParams(window.location.search);
+  let imported=false;
+  if(p.has('bedtime')){S.log.sleep.bedtime=p.get('bedtime');imported=true;}
+  if(p.has('wakeup')){S.log.sleep.wakeup=p.get('wakeup');imported=true;}
+  if(p.has('deep')){S.log.sleep.deep=+p.get('deep');imported=true;}
+  if(p.has('rem')){S.log.sleep.rem=+p.get('rem');imported=true;}
+  if(p.has('core')){S.log.sleep.core=+p.get('core');imported=true;}
+  if(p.has('awake')){S.log.sleep.awake=+p.get('awake');imported=true;}
+  if(p.has('hr')){S.log.sleep.hr=+p.get('hr');imported=true;}
+  if(p.has('resthr')){S.log.sleep.restHr=+p.get('resthr');imported=true;}
+  if(p.has('resp')){S.log.sleep.resp=+p.get('resp');imported=true;}
+  if(imported){
+    // auto-calc quality
+    const sl=S.log.sleep;
+    if(sl.deep||sl.rem){
+      let sc=3;const tot=(sl.deep||0)+(sl.rem||0)+(sl.core||0)+(sl.awake||0);
+      if(tot>0){const dp=(sl.deep||0)/tot,rp=(sl.rem||0)/tot;if(dp>=0.15&&rp>=0.20)sc=5;else if(dp>=0.12&&rp>=0.15)sc=4;else if(dp>=0.08||rp>=0.12)sc=3;else sc=2;if(((sl.awake||0)/tot)>0.15)sc=Math.max(1,sc-1);}
+      if(sl.hr&&sl.hr<50)sc=Math.min(5,sc+1);if(sl.hr&&sl.hr>70)sc=Math.max(1,sc-1);
+      sl.quality=sc;
+    }
+    // clean URL
+    window.history.replaceState({},'',window.location.pathname);
+    toast('ヘルスケアデータを自動取り込みました');
+  }
+}
+
+/* ═══ Init ═══ */
+async function init(){
+  await openDB();
+  const s=await dbG(SKEY);if(s)S.sets={...JSON.parse(JSON.stringify(defS)),...s,exercisePresets:s.exercisePresets||JSON.parse(JSON.stringify(defEx))};
+  const m=await dbG(MHKEY);if(m)S.mh=m;
+  await rLD();await loadLog(S.date);
+  checkURLParams();
+  renderTabs();render();
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+async function rLD(){const keys=await dbK('log:');const m={};for(const k of keys){const d=await dbG(k);if(d)m[k.replace('log:','')]={p:d.evaluation?.productivity||0,m:d.evaluation?.mental||0};}S.ld=m;}
+async function loadLog(date){const d=await dbG('log:'+date);if(d){S.log={...mkLog(),...d,selectedWorkouts:d.selectedWorkouts||[],skipped:d.skipped||{},restDay:!!d.restDay,journal:{...mkLog().journal,...(d.journal||{})},sleep:{...mkLog().sleep,...(d.sleep||{})}};}else{S.log=mkLog();S.log.medications=S.sets.presetMeds.map(p=>({presetId:p.id,name:p.name,dose:p.dose,timing:p.timing,taken:false,note:""}));}S.ai=null;S.exEd=null;}
+function renderTabs(){const el=document.getElementById('tabs');el.innerHTML='';[{id:'record',l:'記録'},{id:'dash',l:'分析'},{id:'history',l:'履歴'},{id:'settings',l:'設定'}].forEach(t=>{const b=document.createElement('button');b.className='tab-btn'+(S.view===t.id?' active':'');b.textContent=t.l;b.onclick=()=>{S.view=t.id;renderTabs();render();};el.appendChild(b);});}
+
+/* ═══ Main Render ═══ */
+async function render(){
+  const app=document.getElementById('app');const badge=document.getElementById('date-badge');
+  badge.style.display=S.view==='record'?'block':'none';badge.textContent=S.date;
+  app.innerHTML='';app.style.animation='fadeUp 0.2s ease';
+  switch(S.view){case 'record':renderRec(app);break;case 'dash':await renderDash(app);break;case 'history':renderCal(app);break;case 'settings':renderSets(app);break;}
+}
+
+/* ═══ Glass Section ═══ */
+function sec(title,color,parent,extra){
+  const s=h('div',{className:'glass'});
+  const hd=h('div',{className:'sec-title',style:{color}},title,h('div',{style:{flex:1,height:'1px',background:`linear-gradient(90deg,${color}33,transparent)`}}));
+  if(extra)hd.appendChild(extra);
+  s.appendChild(hd);parent.appendChild(s);return s;
+}
+function slider(label,val,min,max,color,onChange){
+  const c=h('div',{style:{marginBottom:'16px'}});
+  c.append(
+    h('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:'6px'}},h('span',{style:{fontSize:'13px',color:'var(--t2)'}},label),h('span',{style:{fontSize:'20px',fontWeight:700,color,fontFamily:'var(--mono)'}},String(val))),
+    h('input',{type:'range',min:String(min),max:String(max),value:String(val),style:{width:'100%',accentColor:color},onInput:e=>onChange(+e.target.value)}),
+    h('div',{style:{display:'flex',justifyContent:'space-between',fontSize:'10px',color:'var(--t4)',marginTop:'2px'}},h('span',{},String(min)),h('span',{},String(max)))
+  );return c;
+}
+
+/* ═══ RECORD ═══ */
+function renderRec(app){
+  const L=S.log,today=new Date();
+  // Streak
+  let stk=0;for(let i=0;i<365;i++){const d=new Date(today);d.setDate(d.getDate()-i);if(S.ld[fd(d)])stk++;else break;}
+  if(stk>0){const badge=stk>=30?'MASTER':stk>=14?'GREAT':stk>=7?'NICE':'';
+    app.appendChild(h('div',{className:'glass-sm',style:{display:'flex',alignItems:'center',gap:'8px',marginBottom:'16px',borderColor:'rgba(251,146,60,0.15)'}},
+      h('span',{style:{fontSize:'13px',fontWeight:700,color:'var(--orange)',fontFamily:'var(--mono)'}},String(stk)),
+      h('span',{style:{fontSize:'12px',color:'var(--t2)'}},'日連続記録中'),
+      badge?h('span',{style:{marginLeft:'auto',fontSize:'10px',color:'var(--orange)',background:'rgba(251,146,60,0.1)',padding:'2px 8px',borderRadius:'8px',fontWeight:600}},badge):''
+    ));}
+  // Missed
+  const missed=[];for(let i=1;i<=14;i++){const d=new Date(today);d.setDate(d.getDate()-i);if(!S.ld[fd(d)])missed.push(fd(d));}
+  if(missed.length){app.appendChild(h('div',{className:'glass-sm',style:{marginBottom:'16px',borderColor:'rgba(251,191,36,0.15)'}},
+    h('span',{style:{fontSize:'12px',color:'var(--yellow)',fontWeight:600}},`直近14日間で${missed.length}日未記録`),
+    h('div',{style:{display:'flex',gap:'4px',marginTop:'4px',flexWrap:'wrap'}},...missed.slice(0,5).map(d=>h('button',{className:'btn-glass',style:{fontSize:'10px',padding:'2px 8px'},onClick:()=>{S.date=d;loadLog(d).then(render);}},d.slice(5))))
+  ));}
+  // Date nav
+  app.appendChild(h('div',{style:{display:'flex',justifyContent:'center',gap:'10px',marginBottom:'16px'}},
+    h('button',{className:'btn-glass',onClick:()=>{const d=new Date(S.date);d.setDate(d.getDate()-1);S.date=fd(d);loadLog(S.date).then(render);}},'◀ 前日'),
+    h('button',{className:'btn-glass',style:{background:S.date===fd(today)?'rgba(110,231,183,0.12)':'',color:S.date===fd(today)?'var(--green)':'var(--t2)'},onClick:()=>{S.date=fd(today);loadLog(S.date).then(render);}},'今日'),
+    h('button',{className:'btn-glass',onClick:()=>{const d=new Date(S.date);d.setDate(d.getDate()+1);S.date=fd(d);loadLog(S.date).then(render);}},'翌日 ▶')
+  ));
+
+  // MEDS
+  const ms=sec('服薬','var(--pink)',app);
+  L.medications.forEach((m,i)=>{
+    ms.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'10px',marginBottom:'8px',padding:'10px 12px',borderRadius:'12px',background:m.taken?'rgba(244,114,182,0.06)':'var(--glass)',border:`1px solid ${m.taken?'rgba(244,114,182,0.15)':'var(--glassBorder)'}`}},
+      h('button',{style:{width:'26px',height:'26px',borderRadius:'8px',border:'none',background:m.taken?'linear-gradient(135deg,var(--pink),#e879a8)':'var(--t4)',cursor:'pointer',color:'#fff',fontSize:'12px',flexShrink:0,boxShadow:m.taken?'0 2px 8px rgba(244,114,182,0.3)':'none'},onClick:()=>{L.medications[i].taken=!L.medications[i].taken;render();}},m.taken?'✓':''),
+      h('div',{style:{flex:1}},m.presetId
+        ?h('span',{style:{fontSize:'14px',fontWeight:600,color:m.taken?'#f9a8d4':'var(--t2)'}},m.name,' ',h('span',{style:{fontSize:'11px',color:'var(--t3)'}},m.dose+'/'+m.timing))
+        :h('div',{style:{display:'flex',gap:'6px'}},h('input',{className:'glass-input',value:m.name,placeholder:'薬名',style:{flex:1},onInput:e=>{L.medications[i].name=e.target.value;}}),h('input',{className:'glass-input',value:m.dose,placeholder:'用量',style:{width:'70px'},onInput:e=>{L.medications[i].dose=e.target.value;}}))
+      ),
+      !m.presetId?h('button',{style:{background:'none',border:'none',color:'var(--t3)',cursor:'pointer',fontSize:'14px'},onClick:()=>{L.medications.splice(i,1);render();}},'✕'):''
+    ));
+  });
+  ms.appendChild(h('button',{className:'btn-add',onClick:()=>{L.medications.push({presetId:null,name:'',dose:'',timing:'',taken:true,note:''});render();}},'＋ 臨時追加'));
+
+  // EXERCISE
+  const es=sec('運動','var(--blue)',app);
+  es.appendChild(h('button',{className:'btn-glass',style:{width:'100%',textAlign:'left',marginBottom:'6px',background:L.restDay?'rgba(100,116,139,0.1)':'',color:L.restDay?'var(--t2)':'var(--t3)',display:'flex',alignItems:'center',gap:'8px'},onClick:()=>{L.restDay=!L.restDay;if(L.restDay){L.selectedWorkouts=[];L.exercises=[];}render();}},
+    h('span',{style:{width:'20px',height:'20px',borderRadius:'6px',display:'inline-flex',alignItems:'center',justifyContent:'center',background:L.restDay?'var(--t3)':'var(--t4)',color:'#fff',fontSize:'11px'}},L.restDay?'✓':''),'今日は休み'));
+  if(!L.restDay){
+    S.sets.exercisePresets.forEach(pr=>{
+      const active=(L.selectedWorkouts||[]).includes(pr.id);
+      es.appendChild(h('button',{className:'btn-glass',style:{width:'100%',textAlign:'left',marginBottom:'6px',background:active?'rgba(56,189,248,0.08)':'',color:active?'var(--blue)':'var(--t2)',display:'flex',alignItems:'center',gap:'8px'},onClick:()=>{
+        const sel=L.selectedWorkouts||[];
+        if(sel.includes(pr.id)){L.selectedWorkouts=sel.filter(x=>x!==pr.id);L.exercises=[];L.selectedWorkouts.forEach(id=>{const p=S.sets.exercisePresets.find(x=>x.id===id);if(p)L.exercises.push(...p.items.map(i=>({...i,done:false})));});}
+        else{L.selectedWorkouts=[...sel,pr.id];L.exercises.push(...pr.items.map(i=>({...i,done:false})));}
+        L.restDay=false;render();
+      }},h('span',{style:{width:'20px',height:'20px',borderRadius:'6px',display:'inline-flex',alignItems:'center',justifyContent:'center',background:active?'var(--blue)':'var(--t4)',color:'#fff',fontSize:'11px'}},active?'✓':''),pr.name));
+    });
+    if(L.exercises.length){
+      const list=h('div',{style:{borderTop:'1px solid var(--glassBorder)',paddingTop:'12px',marginTop:'8px'}});
+      L.exercises.forEach((ex,i)=>{
+        list.appendChild(h('div',{style:{display:'flex',alignItems:'center',gap:'10px',padding:'9px 12px',borderRadius:'10px',marginBottom:'4px',cursor:'pointer',background:ex.done?'rgba(56,189,248,0.05)':'transparent',border:ex.done?'1px solid rgba(56,189,248,0.12)':'1px solid transparent'},onClick:()=>{L.exercises[i].done=!L.exercises[i].done;render();}},
+          h('span',{style:{width:'20px',height:'20px',borderRadius:'6px',display:'inline-flex',alignItems:'center',justifyContent:'center',background:ex.done?'var(--blue)':'var(--t4)',color:'#fff',fontSize:'11px',flexShrink:0}},ex.done?'✓':''),
+          h('span',{style:{fontSize:'13px',fontWeight:500,color:ex.done?'#7dd3fc':'var(--t2)',flex:1}},ex.name),
+          h('span',{style:{fontSize:'11px',color:'var(--t4)',fontFamily:'var(--mono)'}},`${ex.weight||''} ${ex.reps||''}`.trim())
+        ));
+      });
+      list.appendChild(h('div',{style:{fontSize:'11px',color:'var(--t4)',textAlign:'right',marginTop:'6px',fontFamily:'var(--mono)'}},`${L.exercises.filter(e=>e.done).length}/${L.exercises.length} 完了`));
+      es.appendChild(list);
+    }
+  }
+
+  // SLEEP
+  const ss=sec('睡眠','var(--violet)',app,h('button',{className:'btn-glass',style:{fontSize:'11px',padding:'3px 10px',marginLeft:'auto'},onClick:pasteSleep},'貼り付け'));
+  ss.append(
+    h('div',{style:{display:'flex',gap:'12px',marginBottom:'12px'}},
+      h('div',{style:{flex:1}},h('label',{style:{fontSize:'11px',color:'var(--t3)',display:'block',marginBottom:'4px'}},'就寝'),h('input',{type:'time',className:'glass-input',value:L.sleep.bedtime,onInput:e=>{L.sleep.bedtime=e.target.value;}})),
+      h('div',{style:{flex:1}},h('label',{style:{fontSize:'11px',color:'var(--t3)',display:'block',marginBottom:'4px'}},'起床'),h('input',{type:'time',className:'glass-input',value:L.sleep.wakeup,onInput:e=>{L.sleep.wakeup=e.target.value;}}))
+    )
+  );
+  // Sleep stages
+  if(L.sleep.deep||L.sleep.rem||L.sleep.core){
+    const grid=h('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'6px',marginBottom:'12px'}});
+    [{k:'deep',l:'深い',c:'#6366f1'},{k:'rem',l:'レム',c:'var(--violet)'},{k:'core',l:'コア',c:'var(--purple)'},{k:'awake',l:'覚醒',c:'var(--t3)'}].forEach(s=>{
+      grid.appendChild(h('div',{style:{textAlign:'center',padding:'8px 4px',background:'var(--glass)',borderRadius:'10px',border:'1px solid var(--glassBorder)'}},
+        h('div',{style:{fontSize:'16px',fontWeight:700,color:s.c,fontFamily:'var(--mono)'}},String(L.sleep[s.k]||'—')),
+        h('div',{style:{fontSize:'9px',color:'var(--t3)',marginTop:'2px'}},s.l+'(分)')
+      ));
+    });
+    ss.appendChild(grid);
+  }
+  // HR
+  if(L.sleep.hr||L.sleep.restHr){
+    ss.appendChild(h('div',{style:{display:'flex',gap:'12px',marginBottom:'12px',fontSize:'12px'}},
+      L.sleep.hr?h('span',{style:{color:'var(--pink)'}},'睡眠中HR '+L.sleep.hr+'bpm'):'',
+      L.sleep.restHr?h('span',{style:{color:'var(--t3)'}},'安静時HR '+L.sleep.restHr+'bpm'):''
+    ));
+  }
+  ss.appendChild(slider('睡眠の質',L.sleep.quality,1,5,'var(--violet)',v=>{L.sleep.quality=v;render();}));
+  ss.appendChild(h('input',{className:'glass-input',value:L.sleep.note,placeholder:'メモ',onInput:e=>{L.sleep.note=e.target.value;}}));
+
+  // JOURNAL
+  const js=sec('日記・気分','var(--yellow)',app);
+  js.appendChild(h('textarea',{className:'glass-input',value:L.journal.text,placeholder:'今日の出来事、気づき、気持ちを自由に...',style:{minHeight:'100px',resize:'vertical',lineHeight:'1.6'},onInput:e=>{L.journal.text=e.target.value;}}));
+  if(L.journal.autoTags?.length){
+    js.appendChild(h('div',{style:{display:'flex',flexWrap:'wrap',gap:'4px',marginTop:'8px'}},
+      h('span',{style:{fontSize:'10px',color:'var(--t3)'}},'AI:'),
+      ...L.journal.autoTags.map(t=>h('span',{style:{fontSize:'10px',padding:'2px 8px',borderRadius:'10px',background:'rgba(192,132,252,0.1)',color:'#c084fc',border:'1px solid rgba(192,132,252,0.15)'}},t))
+    ));}
+  js.appendChild(h('div',{style:{marginTop:'12px'}},slider('気分スコア',L.journal.moodScore,1,10,'var(--yellow)',v=>{L.journal.moodScore=v;render();})));
+  const tc=h('div',{style:{display:'flex',flexWrap:'wrap',gap:'6px'}});
+  [...DTAGS,...(S.sets.customTags||[])].forEach(tag=>{const a=L.journal.tags.includes(tag);
+    tc.appendChild(h('button',{style:{padding:'5px 14px',borderRadius:'20px',border:'none',fontSize:'12px',cursor:'pointer',fontWeight:500,background:a?'rgba(251,191,36,0.15)':'var(--glass)',color:a?'var(--yellow)':'var(--t3)',backdropFilter:'var(--blur2)',WebkitBackdropFilter:'var(--blur2)'},onClick:()=>{if(a)L.journal.tags=L.journal.tags.filter(t=>t!==tag);else L.journal.tags.push(tag);render();}},(a?'● ':'')+tag));
+  });
+  js.appendChild(tc);
+
+  // EVAL
+  const ev=sec('今日の評価','var(--green)',app);
+  ev.appendChild(slider('生産性',L.evaluation.productivity,1,10,'var(--green)',v=>{L.evaluation.productivity=v;render();}));
+  ev.appendChild(slider('メンタル',L.evaluation.mental,1,10,'var(--purple)',v=>{L.evaluation.mental=v;render();}));
+
+  // SAVE
+  app.appendChild(h('button',{className:'btn-primary',style:{marginTop:'8px'},onClick:doSave},'保存する'));
+
+  // AI
+  if(S.ail){const as=sec('AI インサイト','#c084fc',app);as.appendChild(h('div',{style:{textAlign:'center',padding:'20px 0'}},h('div',{style:{display:'inline-block',width:'24px',height:'24px',border:'3px solid var(--t4)',borderTop:'3px solid #c084fc',borderRadius:'50%',animation:'spin 1s linear infinite'}}),h('p',{style:{fontSize:'12px',color:'var(--t3)',marginTop:'8px'}},'分析中...')));}
+  if(S.ai&&!S.ail){
+    const as=sec('AI インサイト','#c084fc',app);
+    as.appendChild(h('div',{style:{marginBottom:'16px'}},h('div',{style:{fontSize:'11px',color:'var(--t3)',marginBottom:'6px',fontFamily:'var(--mono)',letterSpacing:'0.06em'}},'FEEDBACK'),h('p',{style:{fontSize:'13px',lineHeight:'1.7'}},S.ai.feedback||'')));
+    if(S.ai.tomorrow_prediction){
+      as.appendChild(h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'8px',marginBottom:'16px'}},
+        h('div',{className:'glass-sm',style:{textAlign:'center'}},h('div',{style:{fontSize:'22px',fontWeight:700,color:'var(--green)',fontFamily:'var(--mono)'}},String(S.ai.tomorrow_prediction.productivity)),h('div',{style:{fontSize:'10px',color:'var(--t3)',marginTop:'2px'}},'生産性')),
+        h('div',{className:'glass-sm',style:{textAlign:'center'}},h('div',{style:{fontSize:'22px',fontWeight:700,color:'var(--purple)',fontFamily:'var(--mono)'}},String(S.ai.tomorrow_prediction.mental)),h('div',{style:{fontSize:'10px',color:'var(--t3)',marginTop:'2px'}},'メンタル')),
+        h('div',{className:'glass-sm',style:{textAlign:'center'}},h('div',{style:{fontSize:'13px',fontWeight:600,color:'var(--yellow)',lineHeight:'1.3'}},S.ai.tomorrow_prediction.condition||''),h('div',{style:{fontSize:'10px',color:'var(--t3)',marginTop:'2px'}},'体調'))
+      ));}
+    if(S.ai.recommendation)as.appendChild(h('div',{className:'glass-sm',style:{borderColor:'rgba(192,132,252,0.15)',marginBottom:'12px'}},h('div',{style:{fontSize:'11px',color:'var(--yellow)',fontWeight:700,fontFamily:'var(--mono)',marginBottom:'6px'}},'RECOMMENDATION'),h('p',{style:{fontSize:'13px',lineHeight:'1.6'}},S.ai.recommendation)));
+  }
+}
+
+/* ═══ DASHBOARD ═══ */
+async function renderDash(app){
+  const entries=[];const today=new Date();
+  for(let i=S.dr-1;i>=0;i--){const d=new Date(today);d.setDate(d.getDate()-i);const ds=fd(d);const log=await dbG('log:'+ds);
+    if(log){let sh=0;const sl=log.sleep||{};if(sl.bedtime&&sl.wakeup){const[bh,bm]=sl.bedtime.split(':').map(Number);const[wh,wm]=sl.wakeup.split(':').map(Number);let m=(wh*60+wm)-(bh*60+bm);if(m<0)m+=1440;sh=+(m/60).toFixed(1);}
+      entries.push({date:ds,label:`${d.getMonth()+1}/${d.getDate()}`,p:log.evaluation?.productivity||0,m:log.evaluation?.mental||0,mood:log.journal?.moodScore||0,sleepH:sh,sleepQ:sl.quality||0,restDay:!!log.restDay,wk:(log.selectedWorkouts||[]).map(id=>{const f=S.sets.exercisePresets.find(p=>p.id===id);return f?f.name.replace(/Day \w+ — /,''):'?';}),meds:(log.medications||[]).filter(x=>x.taken).map(x=>x.name)});}}
+  // Range
+  app.appendChild(h('div',{style:{display:'flex',gap:'4px',marginBottom:'16px'},className:'tab-bar'},...[{v:7,l:'1週間'},{v:14,l:'2週間'},{v:30,l:'1ヶ月'},{v:90,l:'3ヶ月'}].map(r=>h('button',{className:'tab-btn'+(S.dr===r.v?' active':''),onClick:()=>{S.dr=r.v;render();}},r.l))));
+  if(!entries.length){app.appendChild(h('div',{style:{textAlign:'center',padding:'40px 0',color:'var(--t3)'}},h('p',{},'まだデータがありません。')));return;}
+  // Trend
+  const ts=sec('スコア推移','var(--green)',app);ts.appendChild(mkLine(entries,['p','m','mood'],['var(--green)','var(--purple)','var(--yellow)'],['生産性','メンタル','気分']));
+  // Sleep scatter
+  const ss=sec('睡眠 vs パフォーマンス','var(--violet)',app);
+  ss.appendChild(h('div',{style:{fontSize:'11px',color:'var(--t3)',marginBottom:'4px'}},'睡眠時間 × 生産性'));
+  ss.appendChild(mkScatter(entries,'sleepH','p',12,10,'var(--green)'));
+  ss.appendChild(h('div',{style:{fontSize:'11px',color:'var(--t3)',marginBottom:'4px',marginTop:'12px'}},'睡眠の質 × メンタル'));
+  ss.appendChild(mkScatter(entries,'sleepQ','m',5,10,'var(--purple)'));
+  // Workout bars
+  const wm={};entries.forEach(d=>{if(d.restDay){(wm['休み']=wm['休み']||{p:[],m:[]}).p.push(d.p);wm['休み'].m.push(d.m);}d.wk.forEach(w=>{(wm[w]=wm[w]||{p:[],m:[]}).p.push(d.p);wm[w].m.push(d.m);});if(!d.restDay&&!d.wk.length){(wm['なし']=wm['なし']||{p:[],m:[]}).p.push(d.p);wm['なし'].m.push(d.m);}});
+  if(Object.keys(wm).length){const ws=sec('運動メニュー別','var(--blue)',app);const bars=Object.entries(wm).map(([n,v])=>({name:n.length>6?n.slice(0,6)+'…':n,avgP:+(v.p.reduce((a,b)=>a+b,0)/v.p.length).toFixed(1),avgM:+(v.m.reduce((a,b)=>a+b,0)/v.m.length).toFixed(1),n:v.p.length}));ws.appendChild(mkBars(bars,['avgP','avgM'],['var(--green)','var(--purple)'],['生産性','メンタル']));}
+  // Summary
+  const su=sec('期間サマリー','var(--yellow)',app);
+  const grid=h('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}});
+  [{l:'平均生産性',v:(entries.reduce((s,d)=>s+d.p,0)/entries.length).toFixed(1),c:'var(--green)'},{l:'平均メンタル',v:(entries.reduce((s,d)=>s+d.m,0)/entries.length).toFixed(1),c:'var(--purple)'},{l:'平均気分',v:(entries.reduce((s,d)=>s+d.mood,0)/entries.length).toFixed(1),c:'var(--yellow)'},{l:'平均睡眠',v:(entries.reduce((s,d)=>s+d.sleepH,0)/entries.length).toFixed(1)+'h',c:'var(--violet)'},{l:'運動日数',v:entries.filter(d=>d.wk.length).length+'/'+entries.length,c:'var(--blue)'},{l:'記録日数',v:entries.length+'日',c:'var(--orange)'}].forEach(s=>{
+    grid.appendChild(h('div',{className:'glass-sm',style:{textAlign:'center'}},h('div',{style:{fontSize:'20px',fontWeight:700,color:s.c,fontFamily:'var(--mono)'}},s.v),h('div',{style:{fontSize:'10px',color:'var(--t3)',marginTop:'2px'}},s.l)));
+  });su.appendChild(grid);
+}
+
+/* ═══ CALENDAR ═══ */
+function renderCal(app){
+  const DS=['日','月','火','水','木','金','土'],MS=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  const y=S.cm.getFullYear(),mo=S.cm.getMonth();
+  app.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}},
+    h('button',{className:'btn-glass',onClick:()=>{S.cm=new Date(y,mo-1,1);render();}},'◀'),
+    h('span',{style:{fontSize:'18px',fontWeight:700,fontFamily:'var(--mono)'}},`${y}年 ${MS[mo]}`),
+    h('button',{className:'btn-glass',onClick:()=>{S.cm=new Date(y,mo+1,1);render();}},'▶')
+  ));
+  const grid=h('div',{style:{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:'4px'}});
+  DS.forEach(d=>grid.appendChild(h('div',{style:{textAlign:'center',fontSize:'11px',color:'var(--t3)',fontWeight:600,padding:'4px 0'}},d)));
+  for(let i=0;i<new Date(y,mo,1).getDay();i++)grid.appendChild(h('div'));
+  for(let d=1;d<=new Date(y,mo+1,0).getDate();d++){
+    const ds=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,data=S.ld[ds],isT=ds===fd(new Date());
+    const cell=h('div',{style:{aspectRatio:'1',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'3px',borderRadius:'12px',cursor:'pointer',background:data?'var(--glass)':'transparent',border:isT?'1px solid var(--green)':'1px solid transparent',backdropFilter:data?'var(--blur2)':''},onClick:()=>{S.date=ds;S.view='record';loadLog(ds).then(()=>{renderTabs();render();});}},
+      h('span',{style:{fontSize:'13px',fontWeight:isT?700:400,color:data?'var(--t1)':'var(--t4)',fontFamily:'var(--mono)'}},String(d)));
+    if(data){const dots=h('div',{style:{display:'flex',gap:'3px'}});
+      dots.append(h('div',{style:{width:'7px',height:'7px',borderRadius:'50%',background:`conic-gradient(var(--green) ${data.p*10}%,rgba(255,255,255,0.05) ${data.p*10}%)`}}),h('div',{style:{width:'7px',height:'7px',borderRadius:'50%',background:`conic-gradient(var(--purple) ${data.m*10}%,rgba(255,255,255,0.05) ${data.m*10}%)`}}));
+      cell.appendChild(dots);}
+    grid.appendChild(cell);
+  }
+  app.appendChild(grid);
+}
+
+/* ═══ SETTINGS ═══ */
+function renderSets(app){
+  const tabs=h('div',{className:'tab-bar',style:{marginBottom:'16px'}});
+  [{id:'meds',l:'服薬'},{id:'workout',l:'運動'},{id:'tags',l:'タグ'},{id:'api',l:'API'},{id:'data',l:'データ'}].forEach(t=>{
+    tabs.appendChild(h('button',{className:'tab-btn'+(S.sTab===t.id?' active':''),onClick:()=>{S.sTab=t.id;render();}},t.l));
+  });app.appendChild(tabs);
+
+  if(S.sTab==='meds'){
+    const s=sec('服薬プリセット','var(--pink)',app);
+    S.sets.presetMeds.forEach((m,i)=>{
+      s.appendChild(h('div',{style:{display:'grid',gridTemplateColumns:'1fr 80px 70px 32px',gap:'8px',marginBottom:'8px',alignItems:'center'}},
+        h('input',{className:'glass-input',value:m.name,placeholder:'薬の名前',onInput:e=>{S.sets.presetMeds[i].name=e.target.value;saveS();}}),
+        h('input',{className:'glass-input',value:m.dose,placeholder:'用量',onInput:e=>{S.sets.presetMeds[i].dose=e.target.value;saveS();}}),
+        h('select',{className:'glass-input',value:m.timing,style:{cursor:'pointer'},onChange:e=>{S.sets.presetMeds[i].timing=e.target.value;saveS();}},...['朝','昼','夜','就寝前'].map(t=>h('option',{value:t,selected:m.timing===t},t))),
+        h('button',{style:{background:'rgba(127,29,29,0.3)',border:'1px solid rgba(153,27,27,0.5)',borderRadius:'8px',cursor:'pointer',padding:'4px 6px',color:'var(--red)',fontSize:'12px'},onClick:()=>{S.sets.presetMeds.splice(i,1);saveS();render();}},'✕')
+      ));
+    });
+    s.appendChild(h('button',{className:'btn-add',onClick:()=>{S.sets.presetMeds.push({id:'m'+Date.now(),name:'',dose:'',timing:'朝'});saveS();render();}},'＋ 薬を追加'));
+  }
+
+  if(S.sTab==='workout'){
+    const s=sec('運動メニュー','var(--blue)',app);
+    S.sets.exercisePresets.forEach((pr,pi)=>{
+      const card=h('div',{className:'glass',style:{padding:'14px'}});
+      card.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}},
+        h('input',{className:'glass-input',value:pr.name,style:{fontWeight:600,fontSize:'14px',background:'transparent',border:'none',padding:'0'},onInput:e=>{S.sets.exercisePresets[pi].name=e.target.value;saveS();}}),
+        h('div',{style:{display:'flex',gap:'6px'}},
+          h('button',{className:'btn-glass',style:{fontSize:'10px',padding:'3px 8px',color:'var(--red)'},onClick:()=>{S.sets.exercisePresets.splice(pi,1);saveS();render();}},'削除')
+        )
+      ));
+      pr.items.forEach((item,ii)=>{
+        card.appendChild(h('div',{style:{display:'grid',gridTemplateColumns:'1fr 70px 80px 24px',gap:'6px',marginBottom:'6px',alignItems:'center'}},
+          h('input',{className:'glass-input',style:{fontSize:'12px',padding:'6px 8px'},value:item.name,placeholder:'種目',onInput:e=>{S.sets.exercisePresets[pi].items[ii].name=e.target.value;saveS();}}),
+          h('input',{className:'glass-input',style:{fontSize:'12px',padding:'6px 8px'},value:item.weight,placeholder:'重量',onInput:e=>{S.sets.exercisePresets[pi].items[ii].weight=e.target.value;saveS();}}),
+          h('input',{className:'glass-input',style:{fontSize:'12px',padding:'6px 8px'},value:item.reps,placeholder:'回数',onInput:e=>{S.sets.exercisePresets[pi].items[ii].reps=e.target.value;saveS();}}),
+          h('button',{style:{background:'none',border:'none',color:'var(--t4)',cursor:'pointer',fontSize:'12px'},onClick:()=>{S.sets.exercisePresets[pi].items.splice(ii,1);saveS();render();}},'✕')
+        ));
+      });
+      card.appendChild(h('button',{className:'btn-add',style:{fontSize:'11px'},onClick:()=>{S.sets.exercisePresets[pi].items.push({name:'',weight:'',reps:'',note:''});saveS();render();}},'＋ 種目を追加'));
+      s.appendChild(card);
+    });
+    s.appendChild(h('button',{className:'btn-add',onClick:()=>{S.sets.exercisePresets.push({id:'wp'+Date.now(),name:'新しいメニュー',items:[{name:'',weight:'',reps:'',note:''}]});saveS();render();}},'＋ メニューを追加'));
+  }
+
+  if(S.sTab==='api'){
+    const s=sec('Anthropic API','#c084fc',app);
+    s.appendChild(h('p',{style:{fontSize:'12px',color:'var(--t3)',marginBottom:'12px'}},'AIインサイト機能に必要です。console.anthropic.com で取得。'));
+    s.appendChild(h('input',{className:'glass-input',type:'password',value:S.sets.apiKey||'',placeholder:'sk-ant-...',style:{marginBottom:'8px'},onInput:e=>{S.sets.apiKey=e.target.value;saveS();}}));
+    s.appendChild(h('p',{style:{fontSize:'11px',color:'var(--t4)'}},'キーはこのデバイスのIndexedDBにのみ保存されます。'));
+  }
+
+  if(S.sTab==='tags'){
+    const s=sec('気分タグ','var(--yellow)',app);
+    const tw=h('div',{style:{display:'flex',flexWrap:'wrap',gap:'8px',marginBottom:'12px'}});
+    DTAGS.forEach(t=>tw.appendChild(h('span',{style:{padding:'4px 12px',borderRadius:'20px',fontSize:'12px',background:'var(--glass)',color:'var(--t3)',border:'1px solid var(--glassBorder)'}},t+'（固定）')));
+    (S.sets.customTags||[]).forEach(t=>tw.appendChild(h('span',{style:{padding:'4px 12px',borderRadius:'20px',fontSize:'12px',cursor:'pointer',background:'rgba(251,191,36,0.1)',color:'var(--yellow)',border:'1px solid rgba(251,191,36,0.2)'},onClick:()=>{S.sets.customTags=S.sets.customTags.filter(x=>x!==t);saveS();render();}},t+' ×')));
+    s.appendChild(tw);
+    s.appendChild(h('button',{className:'btn-add',onClick:()=>{const t=prompt('新しいタグ名:');if(t){S.sets.customTags=(S.sets.customTags||[]);S.sets.customTags.push(t);saveS();render();}}},'＋ タグを追加'));
+  }
+
+  if(S.sTab==='data'){
+    const s=sec('データ管理','var(--red)',app);
+    s.appendChild(h('div',{className:'glass-sm',style:{marginBottom:'16px'}},
+      h('p',{style:{fontSize:'12px',color:'var(--t3)',marginBottom:'8px'}},'iOSショートカットからの自動取り込みURL形式:'),
+      h('code',{style:{display:'block',fontSize:'10px',color:'var(--violet)',wordBreak:'break-all',lineHeight:'1.6'}},'https://あなたのURL/index.html?bedtime=23:30&wakeup=07:15&deep=45&rem=60&core=180&awake=15&hr=52&resthr=48&resp=14'),
+      h('p',{style:{fontSize:'10px',color:'var(--t4)',marginTop:'8px'}},'ショートカットで「URLを開く」アクションにこの形式でパラメータを付けると自動入力されます。')
+    ));
+    s.appendChild(h('div',{className:'glass-sm',style:{marginBottom:'16px'}},
+      h('p',{style:{fontSize:'12px',color:'var(--t3)',marginBottom:'4px'}},'データの保存場所:'),
+      h('p',{style:{fontSize:'11px',color:'var(--t4)',lineHeight:'1.6'}},'すべてのデータはこのデバイスのブラウザ内（IndexedDB）にのみ保存されます。GitHub Pagesにはアプリコードのみがホストされ、入力データは一切送信されません。APIキーもデバイス内にのみ保管されます。')
+    ));
+    s.appendChild(h('button',{style:{width:'100%',padding:'10px',borderRadius:'12px',border:'1px solid rgba(153,27,27,0.4)',background:'rgba(127,29,29,0.15)',color:'#fca5a5',cursor:'pointer',fontSize:'13px',fontWeight:600,backdropFilter:'var(--blur2)',WebkitBackdropFilter:'var(--blur2)'},onClick:async()=>{if(!confirm('すべてのデータを削除しますか？'))return;const ks=await dbK('');for(const k of ks)await dbD(k);S.sets=JSON.parse(JSON.stringify(defS));S.ld={};S.mh=[];S.log=mkLog();toast('リセットしました');render();}},'全データをリセット'));
+  }
+}
+
+/* ═══ CHART HELPERS ═══ */
+function mkLine(data,keys,colors,labels){
+  if(data.length<2)return h('p',{style:{fontSize:'12px',color:'var(--t4)',textAlign:'center'}},'2日以上のデータが必要です');
+  const pts=data.length,w=100,ht=20,pad=2;
+  let svg=`<svg viewBox="0 0 ${w} ${ht}" style="width:100%;height:180px;" preserveAspectRatio="none">`;
+  keys.forEach((k,ki)=>{let path='';data.forEach((d,i)=>{const x=pad+(i/(pts-1))*(w-pad*2);const y=ht-pad-(d[k]/10)*(ht-pad*2);path+=`${i===0?'M':'L'}${x},${y} `;});
+    svg+=`<path d="${path}" fill="none" stroke="${colors[ki]}" stroke-width="0.5" stroke-linecap="round" opacity="0.8"/>`;
+    data.forEach((d,i)=>{const x=pad+(i/(pts-1))*(w-pad*2);const y=ht-pad-(d[k]/10)*(ht-pad*2);svg+=`<circle cx="${x}" cy="${y}" r="0.6" fill="${colors[ki]}"/>`;});});
+  svg+='</svg>';
+  const c=h('div',{});c.appendChild(h('div',{innerHTML:svg}));
+  const xl=h('div',{style:{display:'flex',justifyContent:'space-between',padding:'0 4px'}});const step=Math.max(1,Math.floor(pts/7));
+  data.forEach((d,i)=>{if(i%step===0||i===pts-1)xl.appendChild(h('span',{style:{fontSize:'9px',color:'var(--t4)'}},d.label));});c.appendChild(xl);
+  const lg=h('div',{style:{display:'flex',gap:'12px',justifyContent:'center',marginTop:'8px'}});
+  labels.forEach((l,i)=>lg.appendChild(h('span',{style:{fontSize:'9px',color:colors[i],display:'flex',alignItems:'center',gap:'3px'}},h('span',{style:{width:'6px',height:'6px',borderRadius:'50%',background:colors[i],display:'inline-block'}}),l)));
+  c.appendChild(lg);return c;
+}
+function mkScatter(data,xK,yK,xM,yM,color){
+  if(data.length<2)return h('p',{style:{fontSize:'12px',color:'var(--t4)',textAlign:'center'}},'2日以上のデータが必要です');
+  const w=100,ht=60,pad=8;let svg=`<svg viewBox="0 0 ${w} ${ht}" style="width:100%;height:140px;">`;
+  svg+=`<line x1="${pad}" y1="${ht-pad}" x2="${w-pad}" y2="${ht-pad}" stroke="rgba(255,255,255,0.06)" stroke-width="0.3"/>`;
+  svg+=`<line x1="${pad}" y1="${pad}" x2="${pad}" y2="${ht-pad}" stroke="rgba(255,255,255,0.06)" stroke-width="0.3"/>`;
+  data.filter(d=>d[xK]>0).forEach(d=>{const x=pad+(d[xK]/xM)*(w-pad*2);const y=ht-pad-(d[yK]/yM)*(ht-pad*2);svg+=`<circle cx="${x}" cy="${y}" r="2" fill="${color}" opacity="0.6"/>`;});
+  svg+='</svg>';return h('div',{innerHTML:svg});
+}
+function mkBars(items,vKeys,colors,labels){
+  const c=h('div',{});const bw=Math.max(20,Math.min(50,280/(items.length*vKeys.length)));
+  const bars=h('div',{style:{display:'flex',alignItems:'flex-end',gap:'8px',height:'140px',justifyContent:'center'}});
+  items.forEach(item=>{const col=h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'2px'}});
+    const bg=h('div',{style:{display:'flex',gap:'2px',alignItems:'flex-end'}});
+    vKeys.forEach((k,ki)=>bg.appendChild(h('div',{style:{width:bw+'px',borderRadius:'4px 4px 0 0',background:colors[ki],height:Math.max(4,item[k]/10*100)+'px'}})));
+    col.append(bg,h('span',{style:{fontSize:'9px',color:'var(--t3)',textAlign:'center',maxWidth:(bw*2+8)+'px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},item.name),h('span',{style:{fontSize:'8px',color:'var(--t4)'}},'n='+item.n));
+    bars.appendChild(col);});
+  c.appendChild(bars);
+  const lg=h('div',{style:{display:'flex',gap:'12px',justifyContent:'center',marginTop:'8px'}});
+  labels.forEach((l,i)=>lg.appendChild(h('span',{style:{fontSize:'9px',color:colors[i],display:'flex',alignItems:'center',gap:'3px'}},h('span',{style:{width:'6px',height:'6px',borderRadius:'2px',background:colors[i],display:'inline-block'}}),l)));
+  c.appendChild(lg);return c;
+}
+
+/* ═══ SAVE & AI ═══ */
+async function doSave(){
+  try{await dbS('log:'+S.date,JSON.parse(JSON.stringify(S.log)));
+    const ne=S.log.medications.map(m=>({date:S.date,name:m.name,dose:m.dose,timing:m.timing,taken:m.taken}));
+    S.mh=S.mh.filter(h=>h.date!==S.date).concat(ne);await dbS(MHKEY,S.mh);
+    await rLD();toast('保存しました');render();
+    if(S.sets.apiKey)doAI();
+  }catch(e){toast('保存に失敗しました');console.error(e);}
+}
+async function doAI(){
+  S.ail=true;S.ai=null;render();
+  try{const recent=[];for(let i=1;i<=7;i++){const d=new Date(S.date);d.setDate(d.getDate()-i);const l=await dbG('log:'+fd(d));if(l)recent.push({date:fd(d),...l});}
+    const rs=recent.map(r=>`${r.date}:P${r.evaluation?.productivity||'?'} M${r.evaluation?.mental||'?'} 睡眠質${r.sleep?.quality||'?'} 気分${r.journal?.moodScore||'?'}`).join('\n');
+    const L=S.log,sl=L.sleep||{};
+    const prompt=`あなたはウェルネスAIコーチ。JSON形式のみで回答。
+{"feedback":"フィードバック2-3文","tomorrow_prediction":{"productivity":1-10,"mental":1-10,"condition":"体調予測"},"recommendation":"アドバイス1-2文","journal_tags":["タグ3-5個"],"journal_summary":"日記1行要約"}
+今日${S.date}: 薬:${(L.medications||[]).filter(m=>m.taken).map(m=>m.name).join(',')||'なし'} 運動:${L.restDay?'休み':L.exercises?.length+'種目'} 睡眠:${sl.bedtime}→${sl.wakeup} 質${sl.quality}/5${sl.hr?' HR'+sl.hr:''}${sl.restHr?' 安静HR'+sl.restHr:''} 日記:${L.journal?.text||'なし'} 気分${L.journal?.moodScore}/10 P${L.evaluation?.productivity}/10 M${L.evaluation?.mental}/10
+直近7日:\n${rs||'なし'}`;
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':S.sets.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();const text=data.content?.map(c=>c.text||'').join('')||'';
+    S.ai=JSON.parse(text.replace(/```json|```/g,'').trim());
+    if(S.ai.journal_tags){S.log.journal.autoTags=S.ai.journal_tags;S.log.journal.summary=S.ai.journal_summary;await dbS('log:'+S.date,JSON.parse(JSON.stringify(S.log)));}
+  }catch(e){console.error('AI:',e);S.ai={feedback:'API接続に失敗しました。設定でAPIキーを確認してください。'};}
+  S.ail=false;render();
+}
+async function saveS(){await dbS(SKEY,S.sets);}
+
+async function pasteSleep(){
+  try{const text=await navigator.clipboard.readText();let data={};
+    if(text.includes(':')){if(text.includes('bedtime:')||text.includes('deep:')||text.includes('hr:')){text.split(',').forEach(p=>{const i=p.indexOf(':');if(i===-1)return;data[p.substring(0,i).trim()]=p.substring(i+1).trim();});}else{const ps=text.trim().split(',').map(s=>s.trim());if(ps.length>=2){data.bedtime=ps[0];data.wakeup=ps[1];}}}
+    if(!data.bedtime&&!data.deep&&!data.hr){toast('形式が不正です');return;}
+    const sl=S.log.sleep;
+    if(data.bedtime)sl.bedtime=data.bedtime;if(data.wakeup)sl.wakeup=data.wakeup;
+    sl.deep=+data.deep||null;sl.rem=+data.rem||null;sl.core=+data.core||null;sl.awake=+data.awake||null;sl.hr=+data.hr||null;sl.restHr=+data.resthr||null;sl.resp=+data.resp||null;
+    if(sl.deep||sl.rem){let sc=3;const tot=(sl.deep||0)+(sl.rem||0)+(sl.core||0)+(sl.awake||0);if(tot>0){const dp=(sl.deep||0)/tot,rp=(sl.rem||0)/tot;if(dp>=.15&&rp>=.2)sc=5;else if(dp>=.12&&rp>=.15)sc=4;else if(dp>=.08||rp>=.12)sc=3;else sc=2;if(((sl.awake||0)/tot)>.15)sc=Math.max(1,sc-1);}if(sl.hr&&sl.hr<50)sc=Math.min(5,sc+1);if(sl.hr&&sl.hr>70)sc=Math.max(1,sc-1);sl.quality=sc;}
+    toast('睡眠データを取り込みました');render();
+  }catch{toast('クリップボードを読み取れませんでした');}
+}
+
+init();
+</script>
+</body>
+</html>

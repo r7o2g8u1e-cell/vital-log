@@ -1,0 +1,17 @@
+{
+  "name": "Vital Log",
+  "short_name": "VitalLog",
+  "description": "Daily Wellness Tracker",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#05080f",
+  "theme_color": "#6ee7b7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2305080f'/><rect x='4' y='4' width='92' height='92' rx='18' fill='none' stroke='url(%23g)' stroke-width='1.5' opacity='0.5'/><text x='50' y='62' font-size='36' font-weight='700' text-anchor='middle' font-family='system-ui' fill='url(%23g)'>VL</text><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%236ee7b7'/><stop offset='100%25' stop-color='%23818cf8'/></linearGradient></defs></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
